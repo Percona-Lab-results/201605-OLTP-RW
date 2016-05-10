@@ -11,7 +11,7 @@ output:
 
 ```{r setup, include=FALSE}
 library(svglite)
-knitr::opts_chunk$set(echo = TRUE,dev = "svglite", fig.ext = "svg")
+knitr::opts_chunk$set(echo = TRUE)
 library("RMySQL")
 library(stringr)
 library(ggplot2)
