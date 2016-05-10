@@ -1,0 +1,85 @@
+---
+title: "OLTP RW "
+author: "VadimTk"
+date: "May 10, 2016"
+--output: html_document
+output:
+  md_document:
+    variant: markdown_github
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("RMySQL")
+library(stringr)
+library(ggplot2)
+library(ggthemes)
+library(reshape2)
+library(knitr)
+
+tm<-theme(legend.position="right",
+          strip.background = element_rect(colour="red", fill="#CCCCFF"))
+
+guides(colour = guide_legend(override.aes = list(size=4)))
+
+
+cons <- dbListConnections(MySQL())
+for(con in cons)
+    dbDisconnect(con)
+con <- dbConnect(MySQL(), user="sbtest", dbname="benchmarks", host="10.20.2.4")
+
+```
+
+# MySQL 5.5 / 5.6 / 5.7 - OLTP RW
+
+## Setup
+
+* Client (sysbench) and server are on different servers, connected via 10Gb network. 
+* CPU: 56 logical CPU threads servers Intel(R) Xeon(R) CPU E5-2683 v3 @ 2.00GHz
+* sysbench 10 tables x 10mln rows, pareto distribution
+* OS: Ubuntu 15.10 (Wily Werewolf)
+* Kernel 4.2.0-30-generic
+
+## Results
+
+```{r proxysql, echo=FALSE, fig.height=8, fig.width=10, warning=FALSE}
+title <- "[network] sysbench OLTP RW memory"
+p2 = dbGetQuery( con,'select sr.runid runidfull,sr.threads, avg(tps) tps, STDDEV_POP(tps) se,avg(rt) rt, STDDEV_POP(rt) sert
+                 from sbtest_results sr,(select runid,threads from sbtest_results where (runid like "OLTP-RW-MEM#smblade01-net#%") group by runid,threads having count(*) > 10) t 
+                 where sec>100 and sec<600 and (sr.runid like "OLTP-RW-MEM#smblade01-net#%")
+                 and sr.runid=t.runid and sr.threads=t.threads GROUP BY sr.runid, sr.threads
+                 ' )
+#(sr.runid like "OLTP-RW-MEM%mysql57" or sr.runid like "OLTP-RW-MEM%tp64%" or sr.runid like "OLTP-RW-MEM%proxy200%"
+p2$runid <- str_extract(p2$runidfull, "([^#]*)$")
+
+ss=subset(p2,runid %in% c("mysql57.long2","mysql57.proxysql.oldintel") )
+ss=subset(p2 )
+m <- ggplot(ss, aes(x=as.factor(threads),y=as.numeric(tps),color=runid,group=runid))
+m+geom_line()+geom_errorbar(aes(ymin=tps-se, ymax=tps+se),width=0.15)+labs(x="Threads",y="Throughput, tps",title=title)+scale_y_continuous(breaks=seq(0, 20000, 1000),labels = scales::comma)+theme(axis.text.x  = element_text(angle=45, vjust=0.5))+tm+scale_color_tableau(name="Version")
+
+```
+
+
+### Relative performance 
+
+base value: MySQL 5.7
+
+```{r schema-relative-2, echo=FALSE, fig.height=4, fig.width=10, message=FALSE, warning=FALSE}
+
+data_wide <- dcast(p2, threads ~ runid, value.var="tps")
+ln <- names(data_wide)
+data_wide[,ln[ln != "threads"]]<-data_wide[,ln[ln != "threads"]]/data_wide[,"mysql57"]
+
+dat_m <- melt(subset(data_wide), id.vars = "threads", measure.vars=ln[ln != "threads"])
+
+m <- ggplot(dat_m, 
+            aes(x=as.factor(threads),y=as.numeric(value),color=variable,group=variable))
+m+geom_point()+geom_line(stat = "identity",aes(fill = as.factor(variable)))+geom_text(aes(label=format(value, digits=2, nsmall=2), 
+                hjust=1), 
+            position = position_dodge(width=0.9),size=3,angle = 45)+labs(x="Threads",y="relative performance",title="sysbench OLTP RW memory")+scale_color_tableau(name="Version")+scale_y_continuous(breaks=seq(0, 1.5, 0.1),labels = scales::comma,limits=c(0,1.2))+theme(axis.text.x  = element_text(angle=45, vjust=0.5))+tm+theme(legend.position="bottom")
+
+
+```
+
+
