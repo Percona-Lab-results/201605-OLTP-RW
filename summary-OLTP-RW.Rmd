@@ -10,7 +10,8 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(svglite)
+knitr::opts_chunk$set(echo = TRUE,dev = "svglite", fig.ext = "svg")
 library("RMySQL")
 library(stringr)
 library(ggplot2)

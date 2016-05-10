@@ -13,10 +13,10 @@ Setup
 Results
 -------
 
-![](summary-OLTP-RW_files/figure-markdown_github/proxysql-1.png)
+![](summary-OLTP-RW_files/figure-markdown_github/proxysql-1.svg)
 
 ### Relative performance
 
 base value: MySQL 5.7
 
-![](summary-OLTP-RW_files/figure-markdown_github/schema-relative-2-1.png)
+![](summary-OLTP-RW_files/figure-markdown_github/schema-relative-2-1.svg)
