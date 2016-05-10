@@ -11,7 +11,9 @@ output:
 
 ```{r setup, include=FALSE}
 library(svglite)
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,dev="png", 
+               dev.args=list(type="cairo-png"),
+               dpi=300)
 library("RMySQL")
 library(stringr)
 library(ggplot2)
