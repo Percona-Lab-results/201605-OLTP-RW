@@ -68,7 +68,7 @@ m+geom_line()+geom_errorbar(aes(ymin=tps-se, ymax=tps+se),width=0.15)+labs(x="Th
 
 base value: MySQL 5.7
 
-```{r schema-relative-2, echo=FALSE, fig.height=4, fig.width=10, message=FALSE, warning=FALSE}
+```{r schema-relative-2, echo=FALSE, fig.height=6, fig.width=10, message=FALSE, warning=FALSE}
 
 data_wide <- dcast(p2, threads ~ runid, value.var="tps")
 ln <- names(data_wide)
